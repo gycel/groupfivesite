@@ -6,7 +6,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from .utils import login_required_custom
 from django.contrib.auth import logout
 from django.urls import reverse
-from django.core.paginator import Paginator
+from .forms import ChangePasswordForm
+# from django.contrib.auth.models.User import AbstractBaseUser
 
 def login_view(request):
     try:
@@ -119,23 +120,6 @@ def user_list(request):
     except Exception as e:
         return HttpResponse(f'Error occured during load users: {e}')
 
-def user_list_view(request):
-    query = request.GET.get('q', '')
-    user_queryset = Users.objects.all()
-
-    if query:
-        user_queryset = user_queryset.filter(full_name__icontains=query)
-
-    paginator = Paginator(user_queryset, 10) 
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, 'your_template.html', {
-        'users': page_obj,
-        'query': query,
-    })
-
-
 def add_user(request):
     try:
         errors = {}
@@ -160,8 +144,6 @@ def add_user(request):
                 errors['address'] = 'Address is required.'
             if not contact_number:
                 errors['contact_number'] = 'Contact Number is required.'
-            if not email:
-                errors['email'] = 'Email is required.'
             if not username:
                 errors['username'] = 'Username is required.'
             if not password:
@@ -184,7 +166,7 @@ def add_user(request):
                 )
 
                 messages.success(request, 'User added successfully!')
-                return redirect('user/add')
+                return redirect('/user/list')
             else:
                 genderObj = Genders.objects.all()
                 return render(request, 'user/AddUser.html', {
@@ -265,7 +247,27 @@ def delete_user(request, user_id):
     except Exception as e:
         return HttpResponse(f'Error occured during delete user: {e}')
 
-
 def logout_view(request):
     logout(request)
     return redirect(reverse('login'))
+
+def change_password(request, user_id):
+    userObj = get_object_or_404(Users, pk=user_id)
+
+    if request.method == 'POST':
+        form = ChangePasswordForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password']
+            userObj.password = make_password(new_password)
+            userObj.save()
+           
+            messages.success(request, 'Password changed successfully!')
+            return redirect('user/edit')
+    else:
+        form = ChangePasswordForm()
+
+    context = {
+        'user': userObj,
+        'form': form,
+    }
+    return render(request, 'user/ChangePassword.html', context)

@@ -9,14 +9,20 @@ Users List
 {% include "include/Sidebar.html" %}
 {% include "include/ToastMessage.html" %}
 
-<div class="p-2 sm:ml-64 mt-16 md:mt-14"> 
+<div class="p-2 sm:ml-64 mt-16 md:mt-14">
+    <!-- Search input -->
+    <div class="mb-4">
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by Full Name or Email..."
+            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+    </div>
+   
     <div class="relative overflow-x-auto rounded-sm shadow-sm">
-        <table class="w-full">
-            <form method="GET" action="">
-                <input type="text" name="q" placeholder="Search by name..." value="{{ request.GET.q }}">
-                <button type="submit">Search</button>
-            </form>
-            <thead class="text-left text-xs text-black bg-cyan-400 group">
+        <table class="w-full" id="usersTable">
+            <thead class="text-left text-xs text-black bg-cyan-500 group">
                 <tr>
                     <th class="px-6 py-3">Full Name</th>
                     <th class="px-6 py-3">Gender</th>
@@ -24,10 +30,11 @@ Users List
                     <th class="px-6 py-3">Address</th>
                     <th class="px-6 py-3">Contact Number</th>
                     <th class="px-6 py-3">Email</th>
+                    <th class="px-6 py-3">Username</th>
                     <th class="px-6 py-3">Action</th>
                 </tr>
             </thead>
-            <tbody class="text-xs text-black">
+            <tbody class="text-xs text-black" id="usersTbody">
                 {% for user in users %}
                     <tr class="hover:bg-gray-100 border-b border-gray-200">
                         <td class="px-6 py-3">{{ user.full_name }}</td>
@@ -36,32 +43,139 @@ Users List
                         <td class="px-6 py-3">{{ user.address }}</td>
                         <td class="px-6 py-3">{{ user.contact_number }}</td>
                         <td class="px-6 py-3">{{ user.email }}</td>
+                        <td class="px-6 py-3">{{ user.username }}</td>
                         <td class="px-6 py-3">
                             <div class="inline-flex shadow-sm">
-                                <a href="{% url 'edit_user' user.user_id %}" class="px-3 py-2.5 font-medium text-sm text-black rounded-s-sm hover:bg-green-700 hover:outline-none">Edit</a>
-                                <a href="{% url 'delete_user' user.user_id %}" class="px-3 py-2.5 font-medium text-sm text-black rounded-s-sm hover:bg-red-700 hover:outline-none">Delete</a>
+                                <a href="/user/edit/{{ user.user_id}}" class="px-3 py-2.5 font-medium text-sm text-black rounded-s-sm hover:bg-green-700 hover:outline-none">Edit</a>
+                                <a href="/user/delete/{{user.user_id}}" class="px-3 py-2.5 font-medium text-sm text-black rounded-s-sm hover:bg-red-700 hover:outline-none">Delete</a>
                             </div>
                         </td>
                     </tr>
-                {% empty %}
-                    <tr><td colspan="5">No users found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
-        <div class="inline-flex space-x-2">
-            {% if users.has_previous %}
-                <a href="?q={{ request.GET.q }}&page=1" class="px-3 py-1 bg-gray-200 rounded">First</a>
-                <a href="?q={{ request.GET.q }}&page={{ users.previous_page_number }}" class="px-3 py-1 bg-gray-200 rounded">Previous</a>
-            {% endif %}
-    
-            <span class="px-3 py-1 bg-gray-300 rounded">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
-    
-            {% if users.has_next %}
-                <a href="?q={{ request.GET.q }}&page={{ users.next_page_number }}" class="px-3 py-1 bg-gray-200 rounded">Next</a>
-                <a href="?q={{ request.GET.q }}&page={{ users.paginator.num_pages }}" class="px-3 py-1 bg-gray-200 rounded">Last</a>
-            {% endif %}
-        </div>
     </div>
 </div>
 
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#usersTbody tr');
+
+        rows.forEach(row => {
+            const fullName = row.children[0].textContent.toLowerCase();
+            const email = row.children[5].textContent.toLowerCase();
+
+            if (fullName.includes(filter) || email.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+<div class="flex justify-center my-4" id="pagination-controls">
+    <button id="prevPage" class="mx-2 px-4 py-2 bg-gray-300 rounded hover:bg-green-200" disabled>Previous</button>
+    <span id="pageInfo" class="mx-2">Page {{ current_page }} of {{ total_pages }}</span>
+    <button id="nextPage" class="mx-2 px-4 py-2 bg-gray-300 rounded hover:bg-green-200" {% if current_page >= total_pages %}disabled{% endif %}>Next</button>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    const tbody = document.getElementById('usersTbody');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let filteredRows = Array.from(tbody.rows);
+
+   
+    function displayPage() {
+      const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+     
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+     
+      tbody.innerHTML = '';
+
+      const rowsToDisplay = filteredRows.slice(start, end);
+      rowsToDisplay.forEach(row => {
+        tbody.appendChild(row);
+      });
+
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+    }
+
+    function filterRows() {
+      const filter = searchInput.value.toLowerCase();
+      filteredRows = Array.from(tbodyRowsBackup).filter(row => {
+        const fullName = row.cells[0].textContent.toLowerCase();
+        const email = row.cells[5].textContent.toLowerCase();
+        return fullName.includes(filter) || email.includes(filter);
+      });
+      currentPage = 1;
+      displayPage();
+    }
+
+    const tbodyRowsBackup = Array.from(document.querySelectorAll('#usersTbody tr'));
+
+    searchInput.addEventListener('input', () => {
+      filterRows();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        displayPage();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+      if (currentPage < totalPages) {
+        currentPage++;
+        displayPage();
+      }
+    });
+
+    function addUserRow(user) {
+      const newRow = document.createElement('tr');
+      newRow.className = 'hover:bg-gray-100 border-b border-gray-200';
+
+      newRow.innerHTML = `
+        <td class="px-6 py-3">${user.full_name}</td>
+        <td class="px-6 py-3">${user.gender.gender}</td>
+        <td class="px-6 py-3">${user.birth_date}</td>
+        <td class="px-6 py-3">${user.address}</td>
+        <td class="px-6 py-3">${user.contact_number}</td>
+        <td class="px-6 py-3">${user.email}</td>
+        <td class="px-6 py-3">${user.username}</td>
+        <td class="px-6 py-3">
+          <div class="inline-flex shadow-sm">
+            <a href="/user/edit/${user.user_id}" class="px-3 py-2.5 font-medium text-sm text-black rounded-s-sm hover:bg-green-700 hover:outline-none">Edit</a>
+            <a href="/user/delete/${user.user_id}" class="px-3 py-2.5 font-medium text-sm text-black rounded-s-sm hover:bg-red-700 hover:outline-none">Delete</a>
+          </div>
+        </td>
+      `;
+
+      filteredRows.unshift(newRow);
+
+      displayPage();
+    }
+
+    displayPage();
+  });
+</script>
+
 {% endblock content %}
+
