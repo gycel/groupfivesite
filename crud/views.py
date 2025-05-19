@@ -145,6 +145,9 @@ def add_user(request):
                 errors['contact_number'] = 'Contact Number is required.'
             if not username:
                 errors['username'] = 'Username is required.'
+            if Users.objects.filter(username=username).exists():
+                errors['username'] = 'Username already exists.'
+                messages.warning(request, 'Username already exists.')
             if not password:
                 errors['password'] = 'Password is required.'
             if not confirm_password:
@@ -202,16 +205,22 @@ def edit_user(request, user_id):
             email = request.POST.get('email')
             username = request.POST.get('username')
 
-            userObj.user_id = user_id
+            if username != userObj.username and Users.objects.filter(username=username).exists():
+                messages.warning(request, 'Username already exists! Please choose a different username.')
+                return render(request, 'user/EditUser.html', {
+                    'user': userObj,
+                    'genders': Genders.objects.all(),
+                    'username_error': True
+            })
+
             userObj.full_name = fullName
             userObj.gender = Genders.objects.get(pk=gender)
             userObj.birth_date = birthDate
             userObj.address = address
-            userObj.contact_number = contactNumber
+            userObj.contactNumber = contactNumber
             userObj.email = email
-            userObj.username = username 
-
-            userObj.save()
+            userObj.username = username
+            userObj.save()    
 
             messages.success(request, 'User updated successfully!')
             return redirect('/user/list')
