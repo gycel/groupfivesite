@@ -7,7 +7,6 @@ from .utils import login_required_custom
 from django.contrib.auth import logout
 from django.urls import reverse
 from .forms import ChangePasswordForm
-# from django.contrib.auth.models.User import AbstractBaseUser
 
 def login_view(request):
     try:
@@ -201,6 +200,7 @@ def edit_user(request, user_id):
             address = request.POST.get('address')
             contactNumber = request.POST.get('contact_number')
             email = request.POST.get('email')
+            username = request.POST.get('username')
 
             userObj.user_id = user_id
             userObj.full_name = fullName
@@ -209,6 +209,7 @@ def edit_user(request, user_id):
             userObj.address = address
             userObj.contact_number = contactNumber
             userObj.email = email
+            userObj.username = username 
 
             userObj.save()
 
@@ -262,7 +263,7 @@ def change_password(request, user_id):
             userObj.save()
            
             messages.success(request, 'Password changed successfully!')
-            return redirect('user/edit')
+            return redirect('/user/list')
     else:
         form = ChangePasswordForm()
 
