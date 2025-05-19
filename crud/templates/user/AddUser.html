@@ -68,17 +68,17 @@
                     <input type="email" class="bg-white mb-2 px-3 py-2.5 border border-gray-380 text-black block text-sm rounded-sm w-full focus:outline-none focus:ring-blue-600 focus:border-blue-600" name="email" id="email" />
                 </div>
                 <div class="mb-4">
-                    <label for="username" class="block text-sm font-medium mb-2">Username</label>
-                    <input type="text" class="bg-white mb-2 px-3 py-2.5 border border-gray-380 text-black block text-sm rounded-sm w-full focus:outline-none focus:ring-blue-600 focus:border-blue-600" name="username" id="username" />
-                    {% if errors.username %}
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-semibold">Error:</span> {{ errors.username }}</p>
-                    {% endif %}
-                </div>
-                <div class="mb-4">
                     <label for="password" class="block text-sm font-medium mb-2">Password</label>
                     <input type="password" class="bg-white mb-2 px-3 py-2.5 border border-gray-380 text-black block text-sm rounded-sm w-full focus:outline-none focus:ring-blue-600 focus:border-blue-600" name="password" id="password" />
                     {% if errors.password %}
                         <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-semibold">Error:</span> {{ errors.password }}</p>
+                    {% endif %}
+                </div>
+                <div class="mb-4">
+                    <label for="username" class="block text-sm font-medium mb-2">Username</label>
+                    <input type="text" class="bg-white mb-2 px-3 py-2.5 border border-gray-380 text-black block text-sm rounded-sm w-full focus:outline-none focus:ring-blue-600 focus:border-blue-600" name="username" id="username" />
+                    {% if errors.username %}
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-semibold">Error:</span> {{ errors.username }}</p>
                     {% endif %}
                 </div>
                 <div class="mb-4">
@@ -90,7 +90,7 @@
                 </div>
             </div>
         </div>
-        <div class="flex justify-center">
+        <div class="flex p-2 sm:ml-64 mt-5 md:mt-5 justify-center">
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-sm font-medium text-white px-3 py-2.5 rounded-sm shadow-sm cursor-pointer">Save User</button>
         </div>
     </form>
