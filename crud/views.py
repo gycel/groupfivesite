@@ -20,14 +20,15 @@ def login_view(request):
                     request.session['user_id'] = user.user_id
                     return redirect('/user/list')
                 else:
-                    return render(request, 'layout/LogIn.html', {'error': 'Invalid password'})
+                    messages.error(request, f'Invalid email or password.')
             except Users.DoesNotExist:
                 messages.warning(request, 'User does not exist.')
                 return render(request, 'layout/LogIn.html', {'error': 'User not found'})
 
         return render(request, 'layout/LogIn.html')
     except Exception as e:
-        return HttpResponse(f'Error occurred during login: {e}')
+        messages.error(request, f'An error accured: {str(e)}')
+        return redirect('/login/?error=1') 
 
 @login_required_custom
 def gender_list(request):

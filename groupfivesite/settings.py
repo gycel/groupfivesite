@@ -79,7 +79,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'H0ST': '127.0.0.1',
         'NAME': 'groupfivedj_db',
-        'PORT': '3306',
+        'PORT': '3308',
         'USER': 'root',
         'PASSWORD': '',
     }
